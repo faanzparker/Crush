@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siapa yang Kamu Suka?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        utama: '#10539F',
+                        balas: '#22c55e',
+                        abu: '#f3f4f6'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-pink-50 to-blue-50 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md border-t-4 border-utama">
+        <div class="flex justify-center mb-5">
+            <div class="w-16 h-16 bg-utama/15 rounded-full flex items-center justify-center">
+                <span class="text-utama text-2xl font-bold">❤️</span>
+            </div>
+        </div>
+
+        <h2 class="text-center text-2xl font-bold text-gray-800 mb-2">Siapa yang kamu suka?</h2>
+        <p class="text-center text-gray-600 mb-6">Isi jawabanmu di bawah ini ya ✨</p>
+
+        <!-- Form Isian -->
+        <form id="formPertanyaan" class="space-y-4 mb-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pengirim</label>
+                <input type="text" id="nama" placeholder="Contoh: Epan" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-utama/40" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama orang yang kamu suka</label>
+                <input type="text" id="namaSuka" placeholder="Contoh: Epan" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-utama/40" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Kenapa kamu suka dia?</label>
+                <textarea id="alasan" rows="3" placeholder="Contoh: Dia baik, sopan, dan asyik diajak ngobrol" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-utama/40 resize-none" required></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Pesan buat dia</label>
+                <textarea id="pesanBuat" rows="3" placeholder="Contoh: Hii, semoga kamu sehat selalu ya 😊" class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-utama/40 resize-none" required></textarea>
+            </div>
+
+            <button type="submit" id="tombolKirim" class="w-full bg-utama hover:bg-utama/90 text-white font-bold py-3 rounded-lg shadow-md transition">
+                🚀 KIRIM JAWABAN
+            </button>
+
+            <div id="status" class="text-center mt-3 font-medium hidden"></div>
+        </form>
+
+        <!-- Area Balasan Pemilik (bisa banyak tanpa hilang) -->
+        <div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">💬 Pesan dari Pemilik</h3>
+            <div id="areaBalasan" class="bg-abu rounded-lg p-4 min-h-[100px] max-h-80 overflow-y-auto space-y-3">
+                <p class="text-gray-500 italic text-center">Belum ada balasan</p>
+            </div>
+        </div>
+
+        <p class="text-center text-xs text-gray-500 mt-6">© 2026 Faanz Store</p>
+    </div>
+
+    <script>
+        // Data Bot Telegram
+        const TOKEN_BOT = "8767335224:AAG93jOyNr4ALvtFyPjrLrq0q-qdAbOALdc";
+        const ID_PEMILIK = "8597220780";
+        const API_URL = `https://api.telegram.org/bot${TOKEN_BOT}`;
+        let offset = 0;
+
+        const form = document.getElementById("formPertanyaan");
+        const status = document.getElementById("status");
+        const areaBalasan = document.getElementById("areaBalasan");
+
+        // --- Kirim semua isian ke Telegram ---
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            status.classList.add("hidden");
+            tombolKirim.disabled = true;
+            tombolKirim.textContent = "⏳ Mengirim...";
+
+            // Ambil semua data isian
+            const nama = document.getElementById("nama").value.trim();
+            const namaSuka = document.getElementById("namaSuka").value.trim();
+            const alasan = document.getElementById("alasan").value.trim();
+            const pesanBuat = document.getElementById("pesanBuat").value.trim();
+
+            // Susun format pesan yang masuk ke Telegram
+            const teksKirim = `📩 JAWABAN BARU MASUK!
+
+👤 Nama Pengirim: ${nama}
+❤️ Orang yang disukai: ${namaSuka}
+💡 Alasan suka: ${alasan}
+💌 Pesan buat dia: ${pesanBuat}
+
+Balas pakai perintah: /balas [tulisan balasanmu]`;
+
+            try {
+                const res = await fetch(`${API_URL}/sendMessage?chat_id=${ID_PEMILIK}&text=${encodeURIComponent(teksKirim)}`);
+                const hasil = await res.json();
+
+                if (hasil.ok) {
+                    status.textContent = "✅ Jawaban berhasil dikirim!";
+                    status.className = "text-center mt-3 font-medium text-green-600";
+                    form.reset();
+                } else {
+                    status.textContent = "❌ Gagal dikirim, coba lagi ya!";
+                    status.className = "text-center mt-3 font-medium text-red-600";
+                }
+            } catch (err) {
+                status.textContent = "❌ Gangguan jaringan, ulangi sebentar lagi";
+                status.className = "text-center mt-3 font-medium text-red-600";
+            }
+
+            status.classList.remove("hidden");
+            tombolKirim.disabled = false;
+            tombolKirim.textContent = "🚀 KIRIM JAWABAN";
+        });
+
+        // --- Cek perintah /balas dan tampilkan di web ---
+        async function cekBalasan() {
+            try {
+                const res = await fetch(`${API_URL}/getUpdates?offset=${offset}&timeout=10`);
+                const data = await res.json();
+                if (!data.ok) return;
+
+                data.result.forEach(update => {
+                    offset = update.update_id + 1;
+                    const pesan = update.message;
+
+                    // Cuma baca pesan dari kamu saja
+                    if (!pesan || pesan.chat.id != ID_PEMILIK) return;
+
+                    // Cek apakah pakai perintah /balas
+                    if (pesan.text.startsWith("/balas ")) {
+                        const isiBalasan = pesan.text.replace("/balas ", "").trim();
+                        if (!isiBalasan) return;
+
+                        // Hapus tulisan "Belum ada balasan" kalau ada
+                        if (areaBalasan.querySelector("p.italic")) {
+                            areaBalasan.innerHTML = "";
+                        }
+
+                        // Tambah balasan baru di bawah, tidak menghapus yang lama
+                        const elemenBalasan = document.createElement("div");
+                        elemenBalasan.className = "bg-white border border-balas/30 rounded-lg p-3";
+                        elemenBalasan.innerHTML = `<p class="text-gray-800">${isiBalasan}</p>`;
+                        areaBalasan.appendChild(elemenBalasan);
+
+                        // Gulir otomatis ke balasan terbaru
+                        areaBalasan.scrollTop = areaBalasan.scrollHeight;
+                    }
+                });
+            } catch (err) {
+                // Abaikan kesalahan jaringan sementara
+            }
+        }
+
+        // Jalankan pengecekan setiap 3 detik
+        setInterval(cekBalasan, 3000);
+    </script>
+</body>
+</html>
